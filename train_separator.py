@@ -110,46 +110,6 @@ def crop_batch_to_seconds(batch, seg_seconds, fps, chunk_len=None):
     batch["mask"] = torch.ones(B, frames, dtype=mask.dtype, device=mask.device)
     return batch
 
-# ----------------- Teacher setup for EL -----------------
-class SimpleLatentTeacher(nn.Module):
-    """Light MLP teacher for latent-teacher mode."""
-    def __init__(self, in_dim: int, emb_dim: int = 128):
-        super().__init__()
-        self.net = nn.Sequential(
-            nn.LayerNorm(in_dim),
-            nn.Linear(in_dim, emb_dim),
-            nn.GELU(),
-            nn.Linear(emb_dim, emb_dim),
-            nn.LayerNorm(emb_dim)
-        )
-
-    def forward(self, z):  # z: [B,T,C]
-        return self.net(z)
-
-def setup_teachers(hp, cfg, device):
-    """Return teacher handles depending on el_mode."""
-    latent_teacher = None
-    decode_fn = None
-    embed_fn = None
-
-    if hp.el_mode == "latent":
-        latent_teacher = SimpleLatentTeacher(cfg.in_dim, hp.el_emb_dim).to(device)
-        latent_teacher.eval()
-        for p in latent_teacher.parameters():
-            p.requires_grad = False
-
-    elif hp.el_mode == "decoder":
-        # These should point to your actual DAC decode/embed functions
-        from descript_audio_codec import DAC  # example placeholder
-        dac = DAC.load("descript-audio-codec-16khz").to(device)
-        decode_fn = lambda z: dac.decode(z)
-        embed_fn = lambda wav: dac.encode(wav)["z"]
-        # freeze DAC
-        for p in dac.parameters():
-            p.requires_grad = False
-
-    return latent_teacher, decode_fn, embed_fn
-
 # ----------------- Main training -----------------
 def main():
     set_seed(hp.seed)
