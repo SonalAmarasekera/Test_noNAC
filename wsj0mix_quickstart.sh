@@ -10,7 +10,7 @@ git clone https://github.com/mpariente/pywsj0-mix.git
 git clone https://github.com/BlinkDL/RWKV-LM.git
 
 # Required packages
-pip install ninja wandb pandas scipy numpy
+pip install ninja wandb pandas scipy numpy torchcodec
 pip install git+https://github.com/descriptinc/descript-audio-codec
 
 #Moving to RWKV directory and installing dependencies
